@@ -1,13 +1,12 @@
 package ru.hse.spb
 
-fun getGreeting(): String {
-    val words = mutableListOf<String>()
-    words.add("Hello,")
-    words.add("world!")
-
-    return words.joinToString(separator = " ")
-}
+import java.io.File
 
 fun main(args: Array<String>) {
-    println(getGreeting())
+    if (args.size != 1) {
+        println("Invalid arguments. Must be: <path to source file>")
+        return
+    }
+    println("==========RESULT==========")
+    println(interpretSourceCode(File(args[0]).readText()))
 }
