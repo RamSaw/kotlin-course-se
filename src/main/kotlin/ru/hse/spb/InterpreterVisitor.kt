@@ -24,7 +24,7 @@ class InterpreterVisitor(private var scope: Scope) : ExpBaseVisitor<Int?>() {
         return null
     }
 
-    override fun visitVariable(ctx: ExpParser.VariableContext?): Int? {
+    override fun visitVariableDeclaration(ctx: ExpParser.VariableDeclarationContext?): Int? {
         val variableName = ctx!!.IDENTIFIER().text
         scope.addNewVariable(ctx.IDENTIFIER().text, visit(ctx.expression()))
                 ?: throw VariableMultipleDeclarationException(variableName, ctx.start.line)
@@ -51,6 +51,10 @@ class InterpreterVisitor(private var scope: Scope) : ExpBaseVisitor<Int?>() {
             }
         }
         return null
+    }
+
+    override fun visitExpressionInBraces(ctx: ExpParser.ExpressionInBracesContext?): Int? {
+        return visit(ctx!!.expression())
     }
 
     override fun visitAssignment(ctx: ExpParser.AssignmentContext?): Int? {

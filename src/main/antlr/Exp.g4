@@ -13,14 +13,14 @@ blockWithBraces
     ;
 
 statement
-    : functionDefinition | variable | expression | whileStatement | ifStatement | assignment | returnStatement
+    : functionDefinition | variableDeclaration | expression | whileStatement | ifStatement | assignment | returnStatement
     ;
 
 functionDefinition
     : 'fun' IDENTIFIER '(' parameterNames ')' blockWithBraces
     ;
 
-variable
+variableDeclaration
     : 'var' IDENTIFIER ('=' expression)?
     ;
 
