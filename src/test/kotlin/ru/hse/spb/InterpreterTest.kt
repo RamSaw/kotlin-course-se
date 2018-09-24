@@ -191,4 +191,66 @@ class InterpreterTest {
                 .visitBlock(getExpParser(sourceCode).block()))
         checkStreams("2\n", "")
     }
+
+    @Test
+    fun testComment() {
+        val sourceCode = "// println(10)"
+        val scope = Scope(null)
+        assertEquals(null, InterpreterVisitor(scope)
+                .visitFile(getExpParser(sourceCode).file()))
+        checkStreams("", "")
+    }
+
+    @Test(expected = UnknownFunctionException::class)
+    fun testFunctionVisibilityIncorrect() {
+        val sourceCode = "if (1 == 1) { fun foo() { return 10 } } foo()"
+        val scope = Scope(null)
+        InterpreterVisitor(scope).visitFile(getExpParser(sourceCode).file())
+    }
+
+    @Test
+    fun testFunctionVisibilityCorrect() {
+        val sourceCode = "if (1 == 1) { fun foo() { return 10 } if (2 == 2) { return foo() } }"
+        val scope = Scope(null)
+        assertEquals(10, InterpreterVisitor(scope)
+                .visitIfStatement(getExpParser(sourceCode).ifStatement()))
+        checkStreams("", "")
+    }
+
+    @Test(expected = FunctionMultipleDeclarationException::class)
+    fun testOverloadsNotSupported() {
+        val sourceCode = "fun foo() { return 10 } fun foo(a) { return a }"
+        val scope = Scope(null)
+        InterpreterVisitor(scope).visitFile(getExpParser(sourceCode).file())
+    }
+
+    @Test
+    fun testRedefinition() {
+        val sourceCode = "var a = 4 if (a == 4) { var a = 5 println(a) }"
+        val scope = Scope(null)
+        InterpreterVisitor(scope).visitFile(getExpParser(sourceCode).file())
+        checkStreams("5\n", "")
+    }
+
+    @Test(expected = UnknownFunctionException::class)
+    fun testUnknownFunction() {
+        val sourceCode = "foo(a)"
+        val scope = Scope(null)
+        InterpreterVisitor(scope).visitFile(getExpParser(sourceCode).file())
+    }
+
+    @Test(expected = UnknownVariableException::class)
+    fun testUnknownVariable() {
+        val sourceCode = "a = 2"
+        val scope = Scope(null)
+        InterpreterVisitor(scope).visitFile(getExpParser(sourceCode).file())
+    }
+
+    @Test
+    fun testFunctionWithoutReturn() {
+        val sourceCode = "fun foo() {} println(foo())"
+        val scope = Scope(null)
+        InterpreterVisitor(scope).visitFile(getExpParser(sourceCode).file())
+        checkStreams("0\n", "")
+    }
 }
