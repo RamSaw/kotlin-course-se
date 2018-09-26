@@ -6,7 +6,7 @@ import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import kotlin.collections.HashSet
 
-open class SimpleGraph {
+class SimpleGraph {
     private val vertices: MutableSet<Int> = HashSet()
     private val edges: MutableMap<Int, MutableSet<Int>> = HashMap()
 
@@ -27,14 +27,14 @@ open class SimpleGraph {
         return verticesStates
     }
 
-    fun findAnyCycle(): Optional<List<Int>> {
-        return if (vertices.isEmpty()) Optional.empty()
+    fun findAnyCycle(): List<Int>? {
+        return if (vertices.isEmpty()) null
         else findAnyCycleRecursively(vertices.first(), getInitialVerticesStates(), HashMap())
     }
 
     private fun findAnyCycleRecursively(currentVertex: Int,
                                         verticesStates: MutableMap<Int, VertexState>,
-                                        parents: MutableMap<Int, Int>): Optional<List<Int>> {
+                                        parents: MutableMap<Int, Int>): List<Int>? {
         verticesStates[currentVertex] = VertexState.PROCESSING
         for (neighbour in edges[currentVertex]!!) {
             if (neighbour == parents[currentVertex]) {
@@ -43,15 +43,13 @@ open class SimpleGraph {
             if (verticesStates[neighbour] == VertexState.NOT_PROCESSED) {
                 parents[neighbour] = currentVertex
                 val cycle = findAnyCycleRecursively(neighbour, verticesStates, parents)
-                if (cycle.isPresent) {
-                    return cycle
-                }
+                cycle?.let { return it }
             } else if (verticesStates[neighbour] == VertexState.PROCESSING) {
-                return Optional.of(extractCycle(neighbour, currentVertex, parents))
+                return extractCycle(neighbour, currentVertex, parents)
             }
         }
         verticesStates[currentVertex] = VertexState.PROCESSED
-        return Optional.empty()
+        return null
     }
 
     private fun extractCycle(startVertex: Int,
@@ -129,10 +127,9 @@ fun main(args: Array<String>) {
 }
 
 fun getDistancesFromCycle(graph: SimpleGraph): Map<Int, Int> {
-    val foundCycle = graph.findAnyCycle()
-            .orElseThrow { IllegalArgumentException("Input graph must have cycle") }
+    val foundCycle = graph.findAnyCycle() ?: throw IllegalArgumentException("Input graph must have cycle")
     val distancesFromCycle: MutableMap<Int, Int> = HashMap()
-    foundCycle.forEach(Consumer { vertexOnCycle -> distancesFromCycle[vertexOnCycle] = 0 })
+    foundCycle.forEach { vertexOnCycle -> distancesFromCycle[vertexOnCycle] = 0 }
     val newVertex = graph.collapseVertices(HashSet(foundCycle))
     distancesFromCycle.putAll(graph.findDistances(newVertex))
     return distancesFromCycle
