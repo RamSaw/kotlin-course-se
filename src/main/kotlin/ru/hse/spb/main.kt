@@ -1,7 +1,6 @@
 package ru.hse.spb
 
 import java.util.*
-import java.util.function.Consumer
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import kotlin.collections.HashSet
@@ -23,7 +22,7 @@ class SimpleGraph {
 
     private fun getInitialVerticesStates(): MutableMap<Int, VertexState> {
         val verticesStates: MutableMap<Int, VertexState> = HashMap()
-        vertices.forEach(Consumer { vertex -> verticesStates[vertex] = VertexState.NOT_PROCESSED })
+        vertices.forEach { vertex -> verticesStates[vertex] = VertexState.NOT_PROCESSED }
         return verticesStates
     }
 
