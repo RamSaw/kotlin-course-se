@@ -38,32 +38,8 @@ abstract class ItemizableTag(name: String) : BeginEndBlockTag(null, null, name) 
     fun item(init: Item.() -> Unit) = initTag(Item(), init)
 }
 
-class Left : BeginEndBlockTag(null, null, "flushleft")
-
-class Right : BeginEndBlockTag(null, null, "flushright")
-
-class Center : BeginEndBlockTag(null, null, "center")
-
-class Math : BeginEndBlockTag(null, null, "displaymath")
-
-class CustomTag(name: String, options: List<String>?) : BeginEndBlockTag(null, options, name)
-
-class Item : TagWithText("item") {
-    override val value: String?
-        get() = null
-    override val options: List<String>?
-        get() = null
-
-}
-
-class Itemize : ItemizableTag("itemize")
-
-class Enumerate : ItemizableTag("enumerate")
-
-class Frame(value: String?, options: List<String>?) : BeginEndBlockTag(value, options, "frame")
-
 class Document : BeginEndBlockTag(null, null, "document") {
-    private val documentClasses: MutableList<DocumentClass> = listOf<DocumentClass>().toMutableList()
+    private var documentClass: DocumentClass? = null
     private val usePackages: MutableList<UsePackage> = listOf<UsePackage>().toMutableList()
     override fun render(print: (String) -> Unit, indent: String) {
         renderHeader(print, indent)
@@ -71,14 +47,20 @@ class Document : BeginEndBlockTag(null, null, "document") {
     }
 
     private fun renderHeader(print: (String) -> Unit, indent: String) {
-        documentClasses.forEach { documentClass: DocumentClass -> documentClass.render(print, indent) }
+        if (documentClass == null) {
+            throw InvalidTexException("No documentclass tag!")
+        }
+        documentClass!!.render(print, indent)
         usePackages.forEach { usePackage: UsePackage -> usePackage.render(print, indent) }
     }
 
     fun frame(frameTitle: String, vararg options: Pair<String, String>, init: Frame.() -> Unit) = initTag(Frame(frameTitle, joinOptionPairs(options)), init)
 
     fun documentClass(aClass: String, vararg options: String) {
-        documentClasses.add(DocumentClass(aClass, options.toList()))
+        if (documentClass != null) {
+            throw InvalidTexException("Several documentclass tags are not allowed!")
+        }
+        documentClass = DocumentClass(aClass, options.toList())
     }
 
     fun usepackage(aPackage: String, vararg options: String) {
@@ -100,3 +82,29 @@ fun document(init: Document.() -> Unit): Document {
     document.init()
     return document
 }
+
+class Frame(value: String?, options: List<String>?) : BeginEndBlockTag(value, options, "frame")
+
+class Left : BeginEndBlockTag(null, null, "flushleft")
+
+class Right : BeginEndBlockTag(null, null, "flushright")
+
+class Center : BeginEndBlockTag(null, null, "center")
+
+class Math : BeginEndBlockTag(null, null, "displaymath")
+
+class CustomTag(name: String, options: List<String>?) : BeginEndBlockTag(null, options, name)
+
+class Itemize : ItemizableTag("itemize")
+
+class Enumerate : ItemizableTag("enumerate")
+
+class Item : TagWithText("item") {
+    override val value: String?
+        get() = null
+    override val options: List<String>?
+        get() = null
+
+}
+
+class InvalidTexException(message: String) : Exception(message)
