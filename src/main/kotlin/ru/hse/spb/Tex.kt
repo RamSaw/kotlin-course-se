@@ -29,7 +29,6 @@ abstract class Tag(val name: String) : Element {
     val children = arrayListOf<Element>()
     protected abstract val value: String?
     protected abstract val options: List<String>?
-    val attributes = hashMapOf<String, String>()
 
     protected fun <T : Element> initTag(tag: T, init: T.() -> Unit): T {
         tag.init()
@@ -50,14 +49,6 @@ abstract class Tag(val name: String) : Element {
         return builder.toString()
     }
 
-    private fun renderAttributes(): String {
-        val builder = StringBuilder()
-        for ((attr, value) in attributes) {
-            builder.append(" $attr=\"$value\"")
-        }
-        return builder.toString()
-    }
-
     override fun toString(): String {
         val builder = StringBuilder()
         render(builder, "")
@@ -75,10 +66,20 @@ abstract class TagWithText(name: String) : Tag(name) {
     }
 }
 
-abstract class BeginEndBlockTag(name: String) : TagWithText(name) {
-    fun frame(frameTitle: String, vararg options: Pair<String, String>, init: Frame.() -> Unit) = initTag(Frame(frameTitle, joinOptionPairs(options)), init)
+abstract class BeginEndBlockTag(override val value: String?, override val options: List<String>?, name: String) : TagWithText(name) {
+    fun itemize(init: Itemize.() -> Unit) = initTag(Itemize(), init)
 
-    private fun joinOptionPairs(options: Array<out Pair<String, String>>): List<String> = options.toList().stream().map { t -> "${t.first}=${t.second}" }.toList()
+    fun enumerate(init: Enumerate.() -> Unit) = initTag(Enumerate(), init)
+
+    fun math(init: Math.() -> Unit) = initTag(Math(), init)
+
+    fun left(init: Left.() -> Unit) = initTag(Left(), init)
+
+    fun right(init: Right.() -> Unit) = initTag(Right(), init)
+
+    fun center(init: Center.() -> Unit) = initTag(Center(), init)
+
+    fun customTag(name: String, vararg options: Pair<String, String>, init: CustomTag.() -> Unit) = initTag(CustomTag(name, joinOptionPairs(options)), init)
 
     override fun render(print: (String) -> Unit, indent: String) {
         print("$indent\\begin{$name}${if (options == null) "" else "[${renderOptions()}]"}${if (value == null) "" else "{$value}"}\n")
@@ -95,11 +96,35 @@ abstract class BeginEndBlockTag(name: String) : TagWithText(name) {
     }
 }
 
-class Frame(override val value: String?, override val options: List<String>?) : BeginEndBlockTag("frame")
+abstract class ItemizableTag(name: String) : BeginEndBlockTag(null, null, name) {
+    fun item(init: Item.() -> Unit) = initTag(Item(), init)
+}
 
-class Document : BeginEndBlockTag("document") {
-    override var value: String? = null
-    override var options: List<String>? = null
+class Left : BeginEndBlockTag(null, null, "flushleft")
+
+class Right : BeginEndBlockTag(null, null, "flushright")
+
+class Center : BeginEndBlockTag(null, null, "center")
+
+class Math : BeginEndBlockTag(null, null, "displaymath")
+
+class CustomTag(name: String, options: List<String>?) : BeginEndBlockTag(null, options, name)
+
+class Item : TagWithText("item") {
+    override val value: String?
+        get() = null
+    override val options: List<String>?
+        get() = null
+
+}
+
+class Itemize : ItemizableTag("itemize")
+
+class Enumerate : ItemizableTag("enumerate")
+
+class Frame(value: String?, options: List<String>?) : BeginEndBlockTag(value, options, "frame")
+
+class Document : BeginEndBlockTag(null, null, "document") {
     private val documentClasses: MutableList<DocumentClass> = listOf<DocumentClass>().toMutableList()
     private val usePackages: MutableList<UsePackage> = listOf<UsePackage>().toMutableList()
     override fun render(print: (String) -> Unit, indent: String) {
@@ -112,6 +137,7 @@ class Document : BeginEndBlockTag("document") {
         usePackages.forEach { usePackage: UsePackage -> usePackage.render(print, indent) }
     }
 
+    fun frame(frameTitle: String, vararg options: Pair<String, String>, init: Frame.() -> Unit) = initTag(Frame(frameTitle, joinOptionPairs(options)), init)
 
     fun documentClass(aClass: String, vararg options: String) {
         documentClasses.add(DocumentClass(aClass, options.toList()))
@@ -131,3 +157,5 @@ fun document(init: Document.() -> Unit): Document {
     document.init()
     return document
 }
+
+fun joinOptionPairs(options: Array<out Pair<String, String>>): List<String> = options.toList().stream().map { t -> "${t.first}=${t.second}" }.toList()
