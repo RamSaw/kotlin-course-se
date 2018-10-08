@@ -1,12 +1,22 @@
 package ru.hse.spb
 
+import java.io.OutputStream
+
 interface Element {
-    fun render(builder: StringBuilder, indent: String)
+    fun render(builder: StringBuilder, indent: String) {
+        render({ s: String -> builder.append(s) }, indent)
+    }
+
+    fun render(out: OutputStream, indent: String) {
+        render({ s: String -> out.write(s.toByteArray()) }, indent)
+    }
+
+    fun render(print: (String) -> Unit, indent: String)
 }
 
 class TextElement(private val text: String) : Element {
-    override fun render(builder: StringBuilder, indent: String) {
-        builder.append("$indent$text\n")
+    override fun render(print: (String) -> Unit, indent: String) {
+        print("$indent$text\n")
     }
 }
 
@@ -14,9 +24,10 @@ class TextElement(private val text: String) : Element {
 annotation class TexTagMarker
 
 @TexTagMarker
-abstract class Tag(private val name: String) : Element {
+abstract class Tag(val name: String) : Element {
     val children = arrayListOf<Element>()
-    abstract val value: String?
+    protected abstract val value: String?
+    protected abstract val options: List<String>?
     val attributes = hashMapOf<String, String>()
 
     protected fun <T : Element> initTag(tag: T, init: T.() -> Unit): T {
@@ -25,11 +36,17 @@ abstract class Tag(private val name: String) : Element {
         return tag
     }
 
-    override fun render(builder: StringBuilder, indent: String) {
-        builder.append("$indent\\$name[${renderAttributes()}]${if (value == null) "" else "{$value}"}\n")
+    override fun render(print: (String) -> Unit, indent: String) {
+        print("$indent\\$name${if (options == null) "" else "[${renderOptions()}]"}${if (value == null) "" else "{$value}"}\n")
         for (c in children) {
-            c.render(builder, "$indent  ")
+            c.render(print, "$indent  ")
         }
+    }
+
+    private fun renderOptions(): String {
+        val builder = StringBuilder()
+        builder.append(options!!.joinToString(","))
+        return builder.toString()
     }
 
     private fun renderAttributes(): String {
@@ -45,6 +62,10 @@ abstract class Tag(private val name: String) : Element {
         render(builder, "")
         return builder.toString()
     }
+
+    fun toOutputStream(out: OutputStream) {
+        render(out, "")
+    }
 }
 
 abstract class TagWithText(name: String) : Tag(name) {
@@ -53,23 +74,36 @@ abstract class TagWithText(name: String) : Tag(name) {
     }
 }
 
-class Document : TagWithText("document") {
-    override var value: String? = null
-
-    fun documentClass(aClass: String, vararg options: String) {
-        initTag(DocumentClass(aClass)) {}
+abstract class BeginEndBlockTag(name: String) : TagWithText(name) {
+    override fun render(print: (String) -> Unit, indent: String) {
+        print("$indent\\begin{$name}${if (options == null) "" else "[${renderOptions()}]"}\n")
+        for (c in children) {
+            c.render(print, "$indent  ")
+        }
+        print("$indent\\end{$name}\n")
     }
 
-    fun usepackage(init: UsePackage.() -> Unit) = initTag(UsePackage(null), init)
-
-    fun frame(init: Frame.() -> Unit) = initTag(Frame(null), init)
+    private fun renderOptions(): String {
+        val builder = StringBuilder()
+        builder.append(options!!.joinToString(","))
+        return builder.toString()
+    }
 }
 
-class DocumentClass(override val value: String?) : TagWithText("documentClass")
+class Document : BeginEndBlockTag("document") {
+    override var value: String? = null
+    override var options: List<String>? = null
 
-class UsePackage(override val value: String?) : TagWithText("usepackage")
+    fun documentClass(aClass: String, vararg options: String) {
+        initTag(DocumentClass(aClass, options.toList())) {}
+    }
 
-class Frame(override val value: String?) : TagWithText("frame")
+    fun usepackage(aPackage: String, vararg options: String) = initTag(UsePackage(aPackage, options.toList())) {}
+}
+
+class DocumentClass(override val value: String?, override val options: List<String>) : TagWithText("documentClass")
+
+class UsePackage(override val value: String?, override val options: List<String>) : TagWithText("usepackage")
 
 fun document(init: Document.() -> Unit): Document {
     val document = Document()

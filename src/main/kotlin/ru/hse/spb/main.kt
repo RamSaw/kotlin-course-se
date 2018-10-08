@@ -1,13 +1,9 @@
 package ru.hse.spb
 
-fun result(args: Array<String>) =
-        document {
-            documentClass("beamer")
-            usepackage {}
-            frame {}
-        }
-
 fun main(args: Array<String>) {
-    val res = result(arrayOf("first", "second"))
-    println(res)
+    document {
+        documentClass("beamer", "12pt", "a4paper")
+        usepackage("babel")
+        +"AAAA"
+    }.toOutputStream(System.out)
 }
