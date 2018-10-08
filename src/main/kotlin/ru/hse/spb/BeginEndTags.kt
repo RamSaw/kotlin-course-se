@@ -1,70 +1,8 @@
 package ru.hse.spb
 
-import java.io.OutputStream
-import kotlin.streams.toList
-
-@DslMarker
-annotation class TexTagMarker
-
-@TexTagMarker
-interface Element {
-    fun render(builder: StringBuilder, indent: String) {
-        render({ s: String -> builder.append(s) }, indent)
-    }
-
-    fun render(out: OutputStream, indent: String) {
-        render({ s: String -> out.write(s.toByteArray()) }, indent)
-    }
-
-    fun render(print: (String) -> Unit, indent: String)
-}
-
-class TextElement(private val text: String) : Element {
-    override fun render(print: (String) -> Unit, indent: String) {
-        print("$indent$text\n")
-    }
-}
-
-abstract class Tag(val name: String) : Element {
-    val children = arrayListOf<Element>()
-    protected abstract val value: String?
-    protected abstract val options: List<String>?
-
-    protected fun <T : Element> initTag(tag: T, init: T.() -> Unit): T {
-        tag.init()
-        children.add(tag)
-        return tag
-    }
-
-    override fun render(print: (String) -> Unit, indent: String) {
-        print("$indent\\$name${if (options == null) "" else "[${renderOptions()}]"}${if (value == null) "" else "{$value}"}\n")
-        for (c in children) {
-            c.render(print, "$indent  ")
-        }
-    }
-
-    private fun renderOptions(): String {
-        val builder = StringBuilder()
-        builder.append(options!!.joinToString(","))
-        return builder.toString()
-    }
-
-    override fun toString(): String {
-        val builder = StringBuilder()
-        render(builder, "")
-        return builder.toString()
-    }
-
-    fun toOutputStream(out: OutputStream) {
-        render(out, "")
-    }
-}
-
-abstract class TagWithText(name: String) : Tag(name) {
-    operator fun String.unaryPlus() {
-        children.add(TextElement(this))
-    }
-}
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.concurrent.TimeUnit
 
 abstract class BeginEndBlockTag(override val value: String?, override val options: List<String>?, name: String) : TagWithText(name) {
     fun itemize(init: Itemize.() -> Unit) = initTag(Itemize(), init)
@@ -146,16 +84,19 @@ class Document : BeginEndBlockTag(null, null, "document") {
     fun usepackage(aPackage: String, vararg options: String) {
         usePackages.add(UsePackage(aPackage, options.toList()))
     }
+
+    fun exportToPDF(file: Path) {
+        Files.write(file, toString().toByteArray())
+        ProcessBuilder("pdflatex", file.toAbsolutePath().toString())
+                .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+                .redirectError(ProcessBuilder.Redirect.INHERIT)
+                .start()
+                .waitFor(5, TimeUnit.SECONDS)
+    }
 }
-
-class DocumentClass(override val value: String?, override val options: List<String>) : TagWithText("documentclass")
-
-class UsePackage(override val value: String?, override val options: List<String>) : TagWithText("usepackage")
 
 fun document(init: Document.() -> Unit): Document {
     val document = Document()
     document.init()
     return document
 }
-
-fun joinOptionPairs(options: Array<out Pair<String, String>>): List<String> = options.toList().stream().map { t -> "${t.first}=${t.second}" }.toList()
