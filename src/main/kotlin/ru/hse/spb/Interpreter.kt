@@ -7,8 +7,10 @@ import java.util.*
 
 fun interpretSourceCode(sourceCode: String) {
     val expLexer = ExpLexer(CharStreams.fromString(sourceCode))
+    expLexer.removeErrorListener(ConsoleErrorListener.INSTANCE)
     expLexer.addErrorListener(ExpErrorListener())
     val expParser = ExpParser(BufferedTokenStream(expLexer))
+    expParser.removeErrorListener(ConsoleErrorListener.INSTANCE)
     expParser.addErrorListener(ExpErrorListener())
     interpret(expParser.file())
 }
