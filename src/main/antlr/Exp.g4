@@ -44,12 +44,37 @@ returnStatement
     : 'return' expression
     ;
 
+
 expression
+    : logicalOr
+    ;
+
+logicalOr
+    : leftOperand=logicalAnd (operator='||' rightOperand=logicalOr)?
+    ;
+
+logicalAnd
+    : leftOperand=equality (operator='&&' rightOperand=logicalAnd)?
+    ;
+
+equality
+    : leftOperand=relational (operator=('==' | '!=') rightOperand=equality)?
+    ;
+
+relational
+    : leftOperand=additive (operator=('>=' | '<=' | '>' | '<') rightOperand=relational)?
+    ;
+
+additive
+    : leftOperand=multiplicative (operator=('+' | '-') rightOperand=additive)?
+    ;
+
+multiplicative
+    : leftOperand=atom (operator=('*' | '/' | '%') rightOperand=multiplicative)?
+    ;
+
+atom
     : functionCall #functionCallExpression
-    |
-    leftOperand = expression
-    operation = ('+' | '-' | '*' | '/' | '%' | '>' | '<' | '>=' | '<=' | '==' | '!=' | '||' | '&&')
-    rightOperand = expression #binaryExpression
     | IDENTIFIER #identifierExpression
     | LITERAL #literalExpression
     | '(' expression ')' #expressionInBraces

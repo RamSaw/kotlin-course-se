@@ -16,7 +16,7 @@ private fun interpret(fileContext: ExpParser.FileContext) {
     InterpreterVisitor(Scope(null)).visitFile(fileContext)
 }
 
-private fun Boolean.toInt(): Int {
+fun Boolean.toInt(): Int {
     return if (this) 1 else 0
 }
 
@@ -68,7 +68,7 @@ class SourceCodeFunction(functionDefinition: ExpParser.FunctionDefinitionContext
     }
 }
 
-data class Scope(val upperScope: Scope?) {
+class Scope(val upperScope: Scope?) {
     private val functions: MutableMap<String, SourceCodeFunction> = HashMap()
     private val variables: MutableMap<String, Int> = HashMap()
 
@@ -81,7 +81,7 @@ data class Scope(val upperScope: Scope?) {
     }
 
     fun addNewVariable(variableName: String, value: Int?): Int? {
-        if (variables.containsKey(variableName)) {
+        if (variableName in variables) {
             return null
         }
         variables[variableName] = value ?: 0

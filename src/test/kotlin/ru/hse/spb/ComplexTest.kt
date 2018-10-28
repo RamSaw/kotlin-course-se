@@ -12,46 +12,48 @@ class ComplexTest {
 
     @Test
     fun example1() {
-        val sourceCode = "var a = 10\n" +
-                "var b = 20\n" +
-                "if (a > b) {\n" +
-                "    println(1)\n" +
-                "} else {\n" +
-                "    println(0)\n" +
-                "}"
+        val sourceCode =
+                """var a = 10
+                var b = 20
+                if (a > b) {
+                    println(1)
+                } else {
+                    println(0)
+                }"""
         val expected = "0\n"
         baseExampleTest(sourceCode, expected)
     }
 
     @Test
     fun example2() {
-        val sourceCode = "fun fib(n) {\n" +
-                "    if (n <= 1) {\n" +
-                "        return 1\n" +
-                "    }\n" +
-                "    return fib(n - 1) + fib(n - 2)\n" +
-                "}\n" +
-                "\n" +
-                "var i = 1\n" +
-                "while (i <= 5) {\n" +
-                "    println(i, fib(i))\n" +
-                "    i = i + 1\n" +
-                "}"
+        val sourceCode =
+                """fun fib(n) {
+                        if (n <= 1) {
+                            return 1
+                        }
+                        return fib(n - 1) + fib(n - 2)
+                   }
+
+                   var i = 1
+                   while (i <= 5) {
+                       println(i, fib(i))
+                       i = i + 1
+                   }"""
         val expected = "1 1\n2 2\n3 3\n4 5\n5 8\n"
         baseExampleTest(sourceCode, expected)
     }
 
     @Test
     fun example3() {
-        val sourceCode = "fun foo(n) {\n" +
-                "    fun bar(m) {\n" +
-                "        return m + n\n" +
-                "    }\n" +
-                "\n" +
-                "    return bar(1)\n" +
-                "}\n" +
-                "\n" +
-                "println(foo(41)) // prints 42"
+        val sourceCode =
+                """ fun foo(n) {
+                        fun bar(m) {
+                            return m + n
+                        }
+
+                        return bar(1)
+                    }
+                    println(foo(41)) // prints 42"""
         val expected = "42\n"
         baseExampleTest(sourceCode, expected)
     }

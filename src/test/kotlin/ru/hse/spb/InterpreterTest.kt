@@ -71,15 +71,112 @@ class InterpreterTest {
     }
 
     @Test
-    fun testBinaryExpression() {
-        val sourceCode = "a + 1"
+    fun testLogicalOr1() {
+        expressionBaseTest("0 || 0", 0)
+    }
+
+    @Test
+    fun testLogicalOr2() {
+        expressionBaseTest("-1 || 0", 1)
+    }
+
+    @Test
+    fun testLogicalOr3() {
+        expressionBaseTest("0 || -1 || 1", 1)
+    }
+
+    @Test
+    fun testEquality1() {
+        expressionBaseTest("0 == 0", 1)
+    }
+
+    @Test
+    fun testEquality2() {
+        expressionBaseTest("-1 == 0", 0)
+    }
+
+    @Test
+    fun testInequality1() {
+        expressionBaseTest("-1 != -1", 0)
+    }
+
+    @Test
+    fun testInequality2() {
+        expressionBaseTest("-1 != 0", 1)
+    }
+
+    @Test
+    fun testGreaterOrEqual() {
+        expressionBaseTest("0 >= 0", 1)
+    }
+
+    @Test
+    fun testLessOrEqual() {
+        expressionBaseTest("4 <= 0", 0)
+    }
+
+    @Test
+    fun testLess() {
+        expressionBaseTest("-1 < -1", 0)
+    }
+
+    @Test
+    fun testGreater() {
+        expressionBaseTest("-1 > -2", 1)
+    }
+
+    @Test
+    fun testPlus() {
+        expressionBaseTest("-1 + -1", -2)
+    }
+
+    @Test
+    fun testMinus() {
+        expressionBaseTest("2 - 2", 0)
+    }
+
+    @Test
+    fun testMultiplication() {
+        expressionBaseTest("-1 * -2", 2)
+    }
+
+    @Test
+    fun testDivision() {
+        expressionBaseTest("4 / -2", -2)
+    }
+
+    @Test
+    fun testRemainder() {
+        expressionBaseTest("3 % 2", 1)
+    }
+
+    @Test
+    fun testOperatorsPriority1() {
+        expressionBaseTest("0 == 0 && 1", 1)
+    }
+
+    @Test
+    fun testOperatorsPriority2() {
+        expressionBaseTest("0 == (1 && 1)", 0)
+    }
+
+    @Test
+    fun testOperatorsPriority3() {
+        expressionBaseTest("1 == -1 || 0", 0)
+    }
+
+    @Test
+    fun testOperatorsPriority4() {
+        expressionBaseTest("2 + 2 * 3", 2 + 2 * 3)
+    }
+
+    private fun expressionBaseTest(expression: String, expectedResult: Int) {
+        val sourceCode = "println($expression)"
         val scope = Scope(null)
-        scope.addNewVariable("a", 10)
-        assertEquals(11,
-                InterpreterVisitor(scope)
-                        .visitBinaryExpression(getExpParser(sourceCode).expression()
-                                as ExpParser.BinaryExpressionContext?))
-        checkStreams("", "")
+        val parser = getExpParser(sourceCode)
+        assertEquals(null,
+                InterpreterVisitor(scope).visitFunctionCall(parser.functionCall()))
+        checkStreams("$expectedResult\n", "")
     }
 
     @Test
@@ -89,8 +186,7 @@ class InterpreterTest {
         scope.addNewVariable("a", 10)
         assertEquals(11,
                 InterpreterVisitor(scope)
-                        .visitExpressionInBraces(getExpParser(sourceCode).expression()
-                                as ExpParser.ExpressionInBracesContext?))
+                        .visitExpression(getExpParser(sourceCode).expression()))
         checkStreams("", "")
     }
 
