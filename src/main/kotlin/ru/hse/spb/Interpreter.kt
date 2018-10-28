@@ -1,19 +1,27 @@
 package ru.hse.spb
 
-import org.antlr.v4.runtime.BufferedTokenStream
-import org.antlr.v4.runtime.CharStreams
+import org.antlr.v4.runtime.*
 import ru.hse.spb.parser.ExpLexer
 import ru.hse.spb.parser.ExpParser
 import java.util.*
 
 fun interpretSourceCode(sourceCode: String) {
     val expLexer = ExpLexer(CharStreams.fromString(sourceCode))
+    expLexer.addErrorListener(ExpErrorListener())
     val expParser = ExpParser(BufferedTokenStream(expLexer))
+    expParser.addErrorListener(ExpErrorListener())
     interpret(expParser.file())
 }
 
 private fun interpret(fileContext: ExpParser.FileContext) {
     InterpreterVisitor(Scope(null)).visitFile(fileContext)
+}
+
+private class ExpErrorListener : BaseErrorListener() {
+    override fun syntaxError(recognizer: Recognizer<*, *>?, offendingSymbol: Any?,
+                             line: Int, charPositionInLine: Int, msg: String?, e: RecognitionException?) {
+        throw InvalidSourceCodeException("Parsing exception $e with message: ${e?.message}", line)
+    }
 }
 
 fun Boolean.toInt(): Int {

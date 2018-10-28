@@ -1,6 +1,6 @@
 package ru.hse.spb
 
-open class InvalidSourceCodeException(val s: String, private val startLine: Int) : Throwable() {
+open class InvalidSourceCodeException(private val s: String, private val startLine: Int) : Throwable() {
     override val message: String?
         get() = super.message + "\nError starts at line: $startLine\n$s\n"
 }

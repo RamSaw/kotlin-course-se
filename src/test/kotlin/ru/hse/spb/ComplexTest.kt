@@ -58,10 +58,25 @@ class ComplexTest {
         baseExampleTest(sourceCode, expected)
     }
 
-    private fun baseExampleTest(sourceCode: String, exprected: String) {
+    @Test(expected = InvalidSourceCodeException::class)
+    fun testParsingErrorHandling() {
+        val sourceCode =
+                """ fun foo(n) {
+                        fun bar(m) {
+                            return m + n
+                        }
+
+                        return bar(1)
+                    }
+                    println(foo(41.0)) // prints 42"""
+        val expected = "42\n"
+        baseExampleTest(sourceCode, expected)
+    }
+
+    private fun baseExampleTest(sourceCode: String, expected: String) {
         val buffer = ByteArrayOutputStream()
         changeStandardOutput(buffer)
         interpretSourceCode(sourceCode)
-        assertEquals(exprected, buffer.toString())
+        assertEquals(expected, buffer.toString())
     }
 }
