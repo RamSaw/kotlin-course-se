@@ -19,9 +19,6 @@ class LiteralIsNotANumberException(literal: String, startLine: Int) :
 class UnknownFunctionException(functionName: String, startLine: Int) :
         InvalidSourceCodeException("Unknown function $functionName", startLine)
 
-class UnknownOperationException(operation: String, startLine: Int) :
-        InvalidSourceCodeException("Unknown operation $operation", startLine)
-
 class UnknownVariableException(variableName: String, startLine: Int) :
         InvalidSourceCodeException("Unknown variable $variableName", startLine)
 

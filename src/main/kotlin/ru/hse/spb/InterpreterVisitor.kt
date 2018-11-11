@@ -115,16 +115,6 @@ class InterpreterVisitor(private var scope: Scope) : ExpBaseVisitor<Int?>() {
         else binaryOperationFunctions[operator.text]!!.invoke(visit(leftOperand)!!, visit(rightOperand)!!)
     }
 
-/*
-    fun visitBinaryExpression(ctx: ExpParser.BinaryExpressionContext): Int {
-        val operation = ctx.operation.text
-        if (!binaryOperationFunctions.containsKey(operation)) {
-            throw UnknownOperationException(operation, ctx.operation.line)
-        }
-        return binaryOperationFunctions[operation]!!.invoke(visit(ctx.leftOperand)!!, visit(ctx.rightOperand)!!)
-    }
-    */
-
     override fun visitIdentifierExpression(ctx: ExpParser.IdentifierExpressionContext): Int {
         val identifierName = ctx.IDENTIFIER().text
         return scope.getVariableValue(identifierName) ?: throw UnknownVariableException(identifierName, ctx.start.line)
