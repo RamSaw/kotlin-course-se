@@ -39,7 +39,7 @@ abstract class ItemizableTag(name: String) : BeginEndBlockTag(null, null, name) 
 }
 
 class Document : BeginEndBlockTag(null, null, "document") {
-    private var documentClass: DocumentClass? = null
+    private lateinit var _documentClass: DocumentClass
     private val usePackages: MutableList<UsePackage> = listOf<UsePackage>().toMutableList()
     override fun render(print: (String) -> Unit, indent: String) {
         renderHeader(print, indent)
@@ -47,24 +47,24 @@ class Document : BeginEndBlockTag(null, null, "document") {
     }
 
     private fun renderHeader(print: (String) -> Unit, indent: String) {
-        if (documentClass == null) {
+        if (!this::_documentClass.isInitialized) {
             throw InvalidTexException("No documentclass tag!")
         }
-        documentClass!!.render(print, indent)
+        _documentClass.render(print, indent)
         usePackages.forEach { usePackage: UsePackage -> usePackage.render(print, indent) }
     }
 
     fun frame(frameTitle: String, vararg options: Pair<String, String>, init: Frame.() -> Unit) = initTag(Frame(frameTitle, joinOptionPairs(options)), init)
 
     fun documentClass(aClass: String, vararg options: String) {
-        if (documentClass != null) {
+        if (this::_documentClass.isInitialized) {
             throw InvalidTexException("Several documentclass tags are not allowed!")
         }
-        documentClass = DocumentClass(aClass, options.toList())
+        _documentClass = DocumentClass(aClass, options.toList())
     }
 
     fun usepackage(aPackage: String, vararg options: String) {
-        usePackages.add(UsePackage(aPackage, options.toList()))
+        usePackages += UsePackage(aPackage, options.toList())
     }
 
     fun exportToPDF(file: Path) {
@@ -78,9 +78,7 @@ class Document : BeginEndBlockTag(null, null, "document") {
 }
 
 fun document(init: Document.() -> Unit): Document {
-    val document = Document()
-    document.init()
-    return document
+    return Document().apply(init)
 }
 
 class Frame(value: String?, options: List<String>?) : BeginEndBlockTag(value, options, "frame")

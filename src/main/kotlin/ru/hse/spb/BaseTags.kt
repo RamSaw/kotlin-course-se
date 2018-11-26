@@ -1,7 +1,6 @@
 package ru.hse.spb
 
 import java.io.OutputStream
-import kotlin.streams.toList
 
 @DslMarker
 annotation class TexTagMarker
@@ -9,11 +8,11 @@ annotation class TexTagMarker
 @TexTagMarker
 interface Element {
     fun render(builder: StringBuilder, indent: String) {
-        render({ s: String -> builder.append(s) }, indent)
+        render({ builder.append(it) }, indent)
     }
 
     fun render(out: OutputStream, indent: String) {
-        render({ s: String -> out.write(s.toByteArray()) }, indent)
+        render({ out.write(it.toByteArray()) }, indent)
     }
 
     fun render(print: (String) -> Unit, indent: String)
@@ -38,15 +37,15 @@ abstract class Tag(val name: String) : Element {
     }
 
     private fun renderOptions(): String {
-        val builder = StringBuilder()
-        builder.append(options!!.joinToString(","))
-        return builder.toString()
+        return buildString {
+            append(options!!.joinToString(","))
+        }
     }
 
     override fun toString(): String {
-        val builder = StringBuilder()
-        render(builder, "")
-        return builder.toString()
+        return buildString {
+            render(this, "")
+        }
     }
 
     fun toOutputStream(out: OutputStream) {
@@ -66,4 +65,4 @@ abstract class TagWithText(name: String) : Tag(name) {
     }
 }
 
-fun joinOptionPairs(options: Array<out Pair<String, String>>): List<String> = options.toList().stream().map { t -> "${t.first}=${t.second}" }.toList()
+fun joinOptionPairs(options: Array<out Pair<String, String>>): List<String> = options.map { t -> "${t.first}=${t.second}" }.toList()
